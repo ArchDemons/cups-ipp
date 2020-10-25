@@ -12,6 +12,7 @@ use Http\Client\HttpClient;
 use Http\Client\Socket\Client as SocketHttpClient;
 use Http\Message\MessageFactory\GuzzleMessageFactory;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use Smalot\Cups\CupsException;
 
 /**
@@ -72,16 +73,16 @@ class Client implements HttpClient
         $messageFactory = new GuzzleMessageFactory();
         $socketClient = new SocketHttpClient($messageFactory, $socketClientOptions);
         $host = preg_match(
-          '/unix:\/\//',
-          $socketClientOptions['remote_socket']
-        ) ? 'http://localhost' : $socketClientOptions['remote_socket'];
+                        '/unix:\/\//',
+                        $socketClientOptions['remote_socket']
+                ) ? 'http://localhost' : $socketClientOptions['remote_socket'];
         $this->httpClient = new PluginClient(
-          $socketClient, [
+                $socketClient, [
             new ErrorPlugin(),
             new ContentLengthPlugin(),
             new DecoderPlugin(),
             new AddHostPlugin(new Uri($host)),
-          ]
+                ]
         );
 
         $this->authType = self::AUTHTYPE_BASIC;
@@ -116,13 +117,13 @@ class Client implements HttpClient
     /**
      * (@inheritdoc}
      */
-    public function sendRequest(RequestInterface $request)
+    public function sendRequest(RequestInterface $request): ResponseInterface
     {
         if ($this->username || $this->password) {
             switch ($this->authType) {
                 case self::AUTHTYPE_BASIC:
-                    $pass = base64_encode($this->username.':'.$this->password);
-                    $authentication = 'Basic '.$pass;
+                    $pass = base64_encode($this->username . ':' . $this->password);
+                    $authentication = 'Basic ' . $pass;
                     break;
 
                 case self::AUTHTYPE_DIGEST:
@@ -137,4 +138,5 @@ class Client implements HttpClient
 
         return $this->httpClient->sendRequest($request);
     }
+
 }
